@@ -8,6 +8,7 @@ import java.net.URL;
 import android.app.ListActivity;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.NetworkOnMainThreadException;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,12 +31,22 @@ public class MainListActivity extends ListActivity {
 			URL blogFeedUrl = new URL("http://rss.cnn.com/rss/edition.rss" + Number_of_Posts);
 			HttpURLConnection connection = (HttpURLConnection) blogFeedUrl.openConnection();
 			connection.connect();
+			
+			int reponseCode = connection.getResponseCode();
+			Log.i(TAG, "Response Code:" + reponseCode);
 		} 
 		catch (MalformedURLException e) {
 			Log.e(TAG,"Exception caught",e);
-		} catch (IOException e) {
+		} 
+		catch (IOException e) {
 			Log.e(TAG,"Exception caught",e);
 		}
+		catch(NetworkOnMainThreadException e){
+			Log.e(TAG,"Exception caught",e);
+		}catch(Exception e){
+			Log.e(TAG,"Exception caught",e);
+		}
+		
 
 		Resources resources = getResources();
 		mBlogPostTitles = resources.getStringArray(R.array.android_names);
