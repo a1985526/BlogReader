@@ -1,9 +1,15 @@
 package com.ywcheng1985.blogreader;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import android.app.ListActivity;
 import android.content.Context;
@@ -31,7 +37,7 @@ public class MainListActivity extends ListActivity {
 		if(isNetworkAvailable()){
 			GetBlogPostsTask getBlogPostTask = new GetBlogPostsTask();
 			getBlogPostTask.execute();
-			
+
 		}else {
 			Toast.makeText(this, "Network is unavailabl!", Toast.LENGTH_LONG).show();
 		}
@@ -42,7 +48,7 @@ public class MainListActivity extends ListActivity {
 	private boolean isNetworkAvailable() {
 		ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo networkInfo = manager.getActiveNetworkInfo();
-		
+
 		boolean isAvailable = false;
 		if(networkInfo != null && networkInfo.isConnected()){
 			isAvailable = true;
@@ -72,12 +78,34 @@ public class MainListActivity extends ListActivity {
 			int responseCode = -1;
 
 			try {
-				URL blogFeedUrl = new URL("http://blog.teamtreehouse.com/api/get_recent_summary/" + Number_of_Posts);
+				URL blogFeedUrl = new URL("http://blog.teamtreehouse.com/api/get_recent_summary/");
 				HttpURLConnection connection = (HttpURLConnection) blogFeedUrl.openConnection();
 				connection.connect();
 
 				responseCode = connection.getResponseCode();
-				Log.i(TAG, "Response Code:" + responseCode);
+				if (responseCode == HttpURLConnection.HTTP_OK)
+				{
+					InputStream inputStream = connection.getInputStream();
+					Reader reader = new InputStreamReader(inputStream);
+					int contentLength = connection.getContentLength();
+					char[] charArray = new char[contentLength];
+					reader.read(charArray);
+					String responseData = new String(charArray);
+									
+					JSONObject isonResponse = new JSONObject(responseData);
+					String status = isonResponse.getString("status");
+					//Log.v(TAG, responseData);
+					JSONArray jsonPosts = isonResponse.getJSONArray("posts");
+					
+					for (int i =0; i< jsonPosts.length(); i++){
+						JSONObject jsonPost = jsonPosts.getJSONObject(i);
+						String title = jsonPost.getString("title");
+						Log.v(TAG, "Post " + i + ": " + title);
+					}
+					
+				}else{
+					Log.i(TAG, "Response Code:" + responseCode);
+				}
 			} 
 			catch (MalformedURLException e) {
 				Log.e(TAG,"Exception caught",e);
@@ -88,8 +116,6 @@ public class MainListActivity extends ListActivity {
 			catch(Exception e){
 				Log.e(TAG,"Exception caught",e);
 			}
-
-
 			return "Code: " + responseCode;
 		}
 
